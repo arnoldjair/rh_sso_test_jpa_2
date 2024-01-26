@@ -1,0 +1,22 @@
+version: '2'
+ 
+services:
+  database:
+    image: postgres_local
+    command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: sso
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - /db-data:/var/lib/postgresql/data
+    networks:
+      - database
+
+networks:
+  database:
+    driver: bridge
+  default:
+    driver: bridge
