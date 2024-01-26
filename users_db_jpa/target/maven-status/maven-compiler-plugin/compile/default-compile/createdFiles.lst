@@ -1,0 +1,5 @@
+com\gorgosoft\jpa\user\UserEntity.class
+com\gorgosoft\jpa\user\UserStorageDBProvider.class
+com\gorgosoft\jpa\user\UserStorageDBProviderFactory.class
+com\gorgosoft\jpa\user\UserAdapter.class
+META-INF\services\org.keycloak.storage.UserStorageProviderFactory
