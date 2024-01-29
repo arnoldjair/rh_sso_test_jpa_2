@@ -1,5 +1,8 @@
 package com.gorgosoft.jpa.user;
 
+import jakarta.ejb.Local;
+import jakarta.ejb.Remove;
+import jakarta.ejb.Stateful;
 import org.jboss.logging.Logger;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
@@ -21,9 +24,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Stream;
 
+@Stateful
+@Local(UserStorageDBProvider.class)
 public class UserStorageDBProvider implements UserStorageProvider, UserLookupProvider, UserQueryProvider, CredentialInputValidator {
 
     private static final Logger logger = Logger.getLogger(UserStorageDBProvider.class);
@@ -37,9 +41,11 @@ public class UserStorageDBProvider implements UserStorageProvider, UserLookupPro
         this.model = model;
         this.session = session;
         logger.infof("getProvider: %s", session.getProvider(JpaConnectionProvider.class, "user-store"));
+        logger.infof("getProvider: %s", session.getProvider(JpaConnectionProvider.class));
         var providers = session.getAllProviders(JpaConnectionProvider.class);
         providers.stream().forEach(item -> logger.infof("Provider %s: ", item.toString()));
-        em = session.getProvider(JpaConnectionProvider.class, "user-store").getEntityManager();
+        //em = session.getProvider(JpaConnectionProvider.class, "user-store").getEntityManager();
+        em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
     }
 
     @Override
@@ -61,6 +67,7 @@ public class UserStorageDBProvider implements UserStorageProvider, UserLookupPro
         return password != null && password.equals(cred.getValue());
     }
 
+    @Remove
     @Override
     public void close() {
 
@@ -139,4 +146,5 @@ public class UserStorageDBProvider implements UserStorageProvider, UserLookupPro
         }
         return password;
     }
+
 }

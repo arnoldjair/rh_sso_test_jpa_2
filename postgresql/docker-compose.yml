@@ -1,8 +1,11 @@
 version: '2'
  
 services:
-  database:
-    image: postgres_local
+  postgresql:
+    hostname: postgresql
+    container_name: postgresql
+    build:
+      context: .
     command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
     ports:
       - 5432:5432
@@ -11,7 +14,7 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     volumes:
-      - /db-data:/var/lib/postgresql/data
+      - /db-data-3:/var/lib/postgresql/data
     networks:
       - database
 

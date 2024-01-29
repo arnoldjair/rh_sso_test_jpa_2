@@ -44,6 +44,11 @@
             <artifactId>auto-service</artifactId>
             <version>1.1.1</version>
         </dependency>
+        <dependency>
+            <groupId>jakarta.ejb</groupId>
+            <artifactId>jakarta.ejb-api</artifactId>
+            <version>4.0.1</version>
+        </dependency>
     </dependencies>
 
 </project>
