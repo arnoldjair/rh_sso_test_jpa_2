@@ -26,3 +26,22 @@ The above command modifies the standalone.xml file and adds the datasource entry
     </security>
 </datasource>
 ```
+
+## Working with multiple datasource
+
+For solving the next error
+
+```bash
+Adding multiple last resources is disallowed
+```
+
+Add the following in the standalone.xml configuration file:
+
+```xml
+<server xmlns="urn:jboss:domain:16.0">
+...
+    <system-properties>
+        <property name="com.arjuna.ats.arjuna.allowMultipleLastResources" value="true"/>
+    </system-properties>
+```
+

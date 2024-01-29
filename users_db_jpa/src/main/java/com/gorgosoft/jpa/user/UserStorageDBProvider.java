@@ -142,6 +142,13 @@ public class UserStorageDBProvider implements UserStorageProvider, UserLookupPro
     }
 
     @Override
+    public int getUsersCount(RealmModel realm) {
+        Object count = em.createNamedQuery("getUserCount")
+                .getSingleResult();
+        return ((Number) count).intValue();
+    }
+
+    @Override
     public Stream<UserModel> searchForUserStream(RealmModel realm, Map<String, String> params, Integer firstResult, Integer maxResults) {
         return Stream.empty();
     }
