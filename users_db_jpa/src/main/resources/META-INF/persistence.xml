@@ -9,7 +9,7 @@
         <class>com.gorgosoft.jpa.user.UserEntity</class>
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
-            <property name="hibernate.hbm2ddl.auto" value="none"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.temp.use_jdbc_metadata_defaults" value="false"/>
             <!--property name="hibernate.connection.datasource" value="java:jboss/datasources/PasswordDB"/-->

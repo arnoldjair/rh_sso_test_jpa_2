@@ -1,8 +1,6 @@
 package com.gorgosoft.jpa.user;
 
-import jakarta.ejb.Local;
-import jakarta.ejb.Remove;
-import jakarta.ejb.Stateful;
+import lombok.extern.slf4j.Slf4j;
 import org.jboss.logging.Logger;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
@@ -20,32 +18,47 @@ import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.storage.user.UserLookupProvider;
 import org.keycloak.storage.user.UserQueryProvider;
 
+import javax.ejb.Local;
+import javax.ejb.Remove;
+import javax.ejb.Stateful;
+import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
-@Stateful
+@Stateless
 @Local(UserStorageDBProvider.class)
+@Slf4j
 public class UserStorageDBProvider implements UserStorageProvider, UserLookupProvider, UserQueryProvider, CredentialInputValidator {
 
-    private static final Logger logger = Logger.getLogger(UserStorageDBProvider.class);
-
+    @PersistenceContext
     protected EntityManager em;
     protected ComponentModel model;
     protected KeycloakSession session;
     public static final String PASSWORD_CACHE_KEY = UserAdapter.class.getName() + ".password";
 
-    public UserStorageDBProvider(KeycloakSession session, ComponentModel model) {
+    /*public UserStorageDBProvider(KeycloakSession session, ComponentModel model) {
         this.model = model;
         this.session = session;
-        logger.infof("getProvider: %s", session.getProvider(JpaConnectionProvider.class, "user-store"));
-        logger.infof("getProvider: %s", session.getProvider(JpaConnectionProvider.class));
+        log.infof("getProvider: %s", session.getProvider(JpaConnectionProvider.class, "user-store"));
+        log.infof("getProvider: %s", session.getProvider(JpaConnectionProvider.class));
         var providers = session.getAllProviders(JpaConnectionProvider.class);
-        providers.stream().forEach(item -> logger.infof("Provider %s: ", item.toString()));
+        providers.stream().forEach(item -> log.infof("Provider %s: ", item.toString()));
         //em = session.getProvider(JpaConnectionProvider.class, "user-store").getEntityManager();
         em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
+    }*/
+
+    public void setModel(ComponentModel model) {
+        this.model = model;
+    }
+
+    public void setSession(KeycloakSession session) {
+        this.session = session;
     }
 
     @Override
@@ -78,7 +91,7 @@ public class UserStorageDBProvider implements UserStorageProvider, UserLookupPro
         String persistenceId = StorageId.externalId(id);
         UserEntity entity = em.find(UserEntity.class, persistenceId);
         if (entity == null) {
-            logger.info("could not find user by id: " + id);
+            log.info("could not find user by id: " + id);
             return null;
         }
         return new UserAdapter(session, realmModel, model, entity);
@@ -90,7 +103,7 @@ public class UserStorageDBProvider implements UserStorageProvider, UserLookupPro
         query.setParameter("username", username);
         List<UserEntity> result = query.getResultList();
         if (result.isEmpty()) {
-            logger.info("could not find username: " + username);
+            log.info("could not find username: " + username);
             return null;
         }
 
@@ -107,24 +120,30 @@ public class UserStorageDBProvider implements UserStorageProvider, UserLookupPro
     }
 
     @Override
-    public Stream<UserModel> searchForUserStream(RealmModel realmModel, String s, Integer integer, Integer integer1) {
-        logger.info("Calling searchForUserStream that returns null");
-        return null;
+    public Stream<UserModel> searchForUserStream(RealmModel realmModel, String search, Integer firstResult, Integer maxResults) {
+
+        log.info("Calling searchForUserStream");
+        log.info("Realm: {}", realmModel.getName());
+        log.info("Search: {}", search);
+        log.info("FirstResult: {}", firstResult);
+        log.info("MaxResults: {}", maxResults);
+        TypedQuery<UserEntity> query = em.createNamedQuery("searchForUser", UserEntity.class);
+        query.setParameter("search", "%" + search.toLowerCase() + "%");
+        if (firstResult != -1) {
+            query.setFirstResult(firstResult);
+        }
+        if (maxResults != -1) {
+            query.setMaxResults(maxResults);
+        }
+        List<UserEntity> results = query.getResultList();
+        List<UserModel> users = new LinkedList<>();
+        for (UserEntity entity : results) users.add(new UserAdapter(session, realmModel, model, entity));
+        return users.stream();
     }
 
     @Override
     public Stream<UserModel> searchForUserStream(RealmModel realm, Map<String, String> params, Integer firstResult, Integer maxResults) {
-        String search = params.get(UserModel.SEARCH);
-        TypedQuery<UserEntity> query = em.createNamedQuery("searchForUser", UserEntity.class);
-        query.setParameter("search", "%" + search.toLowerCase() + "%");
-        if (firstResult != null) {
-            query.setFirstResult(firstResult);
-        }
-        if (maxResults != null) {
-            query.setMaxResults(maxResults);
-        }
-        var list = query.getResultList();
-        return list.stream().map(entity -> new UserAdapter(session, realm, model, entity));
+        return Stream.empty();
     }
 
     @Override

@@ -17,6 +17,7 @@ import javax.persistence.Table;
                 "( lower(u.username) like :search or u.email like :search ) order by u.username"),
 })
 @Entity(name = "UserEntity")
+@Table(name = "db_user")
 @Data
 public class UserEntity {
 

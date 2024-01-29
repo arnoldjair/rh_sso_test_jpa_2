@@ -1,11 +1,10 @@
-version: '2'
- 
+name: redhat_sso
 services:
   postgresql:
     hostname: postgresql
     container_name: postgresql
     build:
-      context: .
+      context: ./postgresql
     command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
     ports:
       - 5432:5432
@@ -15,11 +14,28 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - /db-data-3:/var/lib/postgresql/data
+      - ./dataset/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     networks:
-      - database
-
+      - redhat_sso
+  postgresql_users:
+    hostname: postgresql_users
+    container_name: postgresql_users
+    build:
+      context: ./postgresql
+    command: -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_DB: users
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - /db-data-4:/var/lib/postgresql/data
+      - ./dataset/schema_users.sql:/docker-entrypoint-initdb.d/schema_users.sql
+    networks:
+      - redhat_sso
 networks:
-  database:
+  redhat_sso:
     driver: bridge
   default:
     driver: bridge

@@ -46,6 +46,7 @@
     </repositories>
 
     <build>
+        <finalName>users_db_jpa_2</finalName>
         <pluginManagement>
             <plugins>
                 <plugin>

@@ -1,0 +1,1 @@
+create database users with encoding 'UTF8';
