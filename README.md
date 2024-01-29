@@ -27,6 +27,30 @@ The above command modifies the standalone.xml file and adds the datasource entry
 </datasource>
 ```
 
+## Configure persistence unit
+Create a file named persistence.xml and add the following content:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0"
+             xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="
+        http://java.sun.com/xml/ns/persistence
+        http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+    <persistence-unit name="user-store"> <!-- The persistence unit name is defined here -->
+        <jta-data-source>java:jboss/datasources/PasswordDB</jta-data-source> <!-- Here goes the jndi-name of the resource, you can find it in the datasource definitions in standalone.xml -->
+        <class>com.gorgosoft.jpa.user.UserEntity</class> <!-- Here goes the list of classes we are working with (package and class name) -->
+        <properties> <!--Hibernate properties-->
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="none"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.temp.use_jdbc_metadata_defaults" value="false"/>
+        </properties>
+    </persistence-unit>
+</persistence>
+```
+In each line of interest there is a commentary explaining its utility.
+
+
 ## Working with multiple datasource
 
 For solving the next error
