@@ -1,9 +1,18 @@
 package com.gorgosoft.jpa.user;
 
-import lombok.extern.slf4j.Slf4j;
-import org.jboss.logging.Logger;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import javax.ejb.Local;
+import javax.ejb.Remove;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+
 import org.keycloak.component.ComponentModel;
-import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.credential.CredentialInput;
 import org.keycloak.credential.CredentialInputValidator;
 import org.keycloak.models.GroupModel;
@@ -18,18 +27,7 @@ import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.storage.user.UserLookupProvider;
 import org.keycloak.storage.user.UserQueryProvider;
 
-import javax.ejb.Local;
-import javax.ejb.Remove;
-import javax.ejb.Stateful;
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
 
 @Stateless
 @Local(UserStorageDBProvider.class)
@@ -41,17 +39,6 @@ public class UserStorageDBProvider implements UserStorageProvider, UserLookupPro
     protected ComponentModel model;
     protected KeycloakSession session;
     public static final String PASSWORD_CACHE_KEY = UserAdapter.class.getName() + ".password";
-
-    /*public UserStorageDBProvider(KeycloakSession session, ComponentModel model) {
-        this.model = model;
-        this.session = session;
-        log.infof("getProvider: %s", session.getProvider(JpaConnectionProvider.class, "user-store"));
-        log.infof("getProvider: %s", session.getProvider(JpaConnectionProvider.class));
-        var providers = session.getAllProviders(JpaConnectionProvider.class);
-        providers.stream().forEach(item -> log.infof("Provider %s: ", item.toString()));
-        //em = session.getProvider(JpaConnectionProvider.class, "user-store").getEntityManager();
-        em = session.getProvider(JpaConnectionProvider.class).getEntityManager();
-    }*/
 
     public void setModel(ComponentModel model) {
         this.model = model;
