@@ -48,8 +48,153 @@ Create a file named persistence.xml and add the following content:
     </persistence-unit>
 </persistence>
 ```
-In each line of interest there is a commentary explaining its utility.
 
+In each line of interest there is a commentary explaining its utility.
+This file must be located in src/main/resources/META-INF
+
+## Configure the classes to be mapped in the database
+
+Each class to be mapped in the database must be decorated with the following annotations
+
+- @Entity:
+  - JPA (Java Persistence API) annotation used to mark a Java class as an entity, meaning it will be mapped to a database table.
+  - Entities are typically used to represent tables in a relational database.
+  - When an entity class is annotated with @Entity, it signifies that instances of this class can be managed by the JPA EntityManager and can be persisted to the database.
+- @Table
+  - JPA annotation used to provide metadata about the mapping of a class to a database table.
+  - It allows you to specify details such as the name of the table to which the entity is mapped, the schema, indexes, etc.
+- @NameQuery 
+  - JPA annotation used to define a named query.
+  - Named queries allow you to define a query with a name within an entity class or at the entity manager level, which can then be referenced in your code using the specified name.
+  - This annotation typically takes two parameters: name and query, where name is the name by which the query will be referred to in your code, and query is the JPQL (Java Persistence Query Language) query string.
+  - Named queries are useful for defining commonly used queries in a centralized location and promoting code reuse. They can also improve performance by allowing the JPA provider to optimize and cache queries.
+
+```java
+package com.gorgosoft.jpa.user;
+
+import lombok.Data;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+
+@NamedQueries({
+        @NamedQuery(name = "getUserByUsername", query = "select u from UserEntity u where u.username = :username"),
+        @NamedQuery(name = "getUserByEmail", query = "select u from UserEntity u where u.email = :email"),
+        @NamedQuery(name = "getUserCount", query = "select count(u) from UserEntity u"),
+        @NamedQuery(name = "getAllUsers", query = "select u from UserEntity u"),
+        @NamedQuery(name = "searchForUser", query = "select u from UserEntity u where " +
+                "( lower(u.username) like :search or u.email like :search ) order by u.username"),
+})
+@Entity(name = "UserEntity")
+@Table(name = "db_user")
+@Data
+public class UserEntity {
+
+    @Id
+    private String id;
+
+
+    private String username;
+    private String email;
+    private String password;
+    private String name;
+
+}
+```
+
+## Configure the data access
+
+In this project the data access is configured in the UserStorageDBProvider class that implements UserStorageProvider, UserLookupProvider, UserQueryProvider and CredentialInputValidator. **It is advisable to decouple the SPI from specific implementations, since it is possible that at some point you may need to change databases or invoke third-party services**.
+
+This class has the next annotations:
+
+- @Stateless:
+  - EJB (Enterprise JavaBeans) annotation used to declare a session bean as stateless.
+  - Statelessness implies that the bean instances do not maintain any conversational state with the client across method invocations.
+  - Each method call on a stateless session bean is independent of any previous calls, and instances can be pooled and reused by the EJB container to serve multiple clients concurrently.
+  - Statelessness is advantageous for scalability, as it allows the container to manage a pool of bean instances efficiently without the overhead of maintaining conversational state.  
+- @Local(UserStorageDBProvider.class):
+  - EJB annotation used to define the local business interface of an EJB.
+  - Local interfaces are used for local EJB invocations within the same JVM (Java Virtual Machine). They provide direct Java method calls without the overhead of remote communication, making them more efficient for intra-application communication.
+  - Using @Local with a specific class name allows you to specify the exact type of the local business interface provided by the EJB.
+
+The next 3 object are needed in the storage provider:
+
+- EntityManager em:
+  - Annotated with @PersistenceContext:
+        - Is a JPA (Java Persistence API) annotation used to inject an EntityManager into a Java EE managed component, such as an EJB, servlet, or CDI bean.
+        - The EntityManager interface is the primary interface used by applications to interact with the persistence context, which manages a set of entity instances.
+        - When an EntityManager is injected using @PersistenceContext, it allows the component to perform CRUD (Create, Read, Update, Delete) operations on entities, as well as execute JPQL (Java Persistence Query Language) queries and manage transactions.
+        - The EntityManager obtained through @PersistenceContext is typically associated with a specific persistence unit defined in the persistence.xml configuration file.
+    - EntityManager is the primary interface used by JPA applications to interact with the persistence context.
+    - With this EntityManager instance, the component can perform various database operations such as persisting, merging, removing, and querying entities.
+- ComponentModel model:
+  - Instances of ComponentModel represent the configuration and metadata associated with a component within the Keycloak system.
+  - Components in Keycloak can include various elements such as realms, clients, users, roles, etc.
+- KeycloakSession session:
+  - KeycloakSession typically represents a session or context within which authentication and authorization operations are performed in a Keycloak-enabled application.
+  - Provides methods and utilities for managing users, roles, permissions, authentication flows, and other security-related functionalities within the Keycloak realm.
+
+```Java
+package com.gorgosoft.jpa.user;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import javax.ejb.Local;
+import javax.ejb.Remove;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+
+import org.keycloak.component.ComponentModel;
+import org.keycloak.credential.CredentialInput;
+import org.keycloak.credential.CredentialInputValidator;
+import org.keycloak.models.GroupModel;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
+import org.keycloak.models.UserCredentialModel;
+import org.keycloak.models.UserModel;
+import org.keycloak.models.cache.CachedUserModel;
+import org.keycloak.models.credential.PasswordCredentialModel;
+import org.keycloak.storage.StorageId;
+import org.keycloak.storage.UserStorageProvider;
+import org.keycloak.storage.user.UserLookupProvider;
+import org.keycloak.storage.user.UserQueryProvider;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Stateless
+@Local(UserStorageDBProvider.class)
+@Slf4j
+public class UserStorageDBProvider implements UserStorageProvider, UserLookupProvider, UserQueryProvider, CredentialInputValidator {
+
+    @PersistenceContext
+    protected EntityManager em;
+    protected ComponentModel model;
+    protected KeycloakSession session;
+```
+
+## Making database queries using namedQueries
+
+The next code snippet shows how to make database queries using namedQueries (defined in entity classes)
+
+```java
+@Override
+    public UserModel getUserByEmail(RealmModel realm, String email) {
+        TypedQuery<UserEntity> query = em.createNamedQuery("getUserByEmail", UserEntity.class);
+        query.setParameter("email", email);
+        List<UserEntity> result = query.getResultList();
+        if (result.isEmpty()) return null;
+        return new UserAdapter(session, realm, model, result.get(0));
+    }
+```
 
 ## Working with multiple datasource
 

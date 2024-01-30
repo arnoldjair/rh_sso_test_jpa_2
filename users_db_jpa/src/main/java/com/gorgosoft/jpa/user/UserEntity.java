@@ -1,12 +1,12 @@
 package com.gorgosoft.jpa.user;
 
-import lombok.Data;
-
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+
+import lombok.Data;
 
 @NamedQueries({
         @NamedQuery(name = "getUserByUsername", query = "select u from UserEntity u where u.username = :username"),

@@ -1,16 +1,19 @@
 package com.gorgosoft.jpa.user;
 
-import com.google.auto.service.AutoService;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Objects;
+
+import javax.naming.InitialContext;
+import javax.naming.NameClassPair;
+import javax.naming.NamingEnumeration;
+
 import org.jboss.logging.Logger;
 import org.keycloak.component.ComponentModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.storage.UserStorageProviderFactory;
 
-import javax.naming.InitialContext;
-import javax.naming.NameClassPair;
-import javax.naming.NamingEnumeration;
-import java.util.Objects;
+import com.google.auto.service.AutoService;
+
+import lombok.extern.slf4j.Slf4j;
 
 @AutoService(UserStorageProviderFactory.class)
 @Slf4j
@@ -30,7 +33,6 @@ public class UserStorageDBProviderFactory implements UserStorageProviderFactory<
                 log.info(list.next().getName());
             }
             UserStorageDBProvider provider = (UserStorageDBProvider)ctx.lookup("java:global/users_db_jpa_2/" + UserStorageDBProvider.class.getSimpleName());
-            //java:global/users_db_jpa_2/UserStorageDBProvider
             log.info("Getting the provider, is null? {}", Objects.isNull(provider));
             provider.setModel(componentModel);
             provider.setSession(keycloakSession);
